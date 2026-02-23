@@ -1,17 +1,20 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
 venv/
 .env
+*.pkl
+face_images/
+class_photos/
+temp_uploads/
+face_db/
 
 # Node
 node_modules/
 .next/
 .env.local
 
-# ML
-*.pkl
-*.pt
-*.h5
-face_db/
-```
+# OS
+.DS_Store
+Thumbs.db
