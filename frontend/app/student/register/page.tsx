@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { registerStudent, getAllSubjects } from "@/lib/api";
+import axios from "axios";
 import Link from "next/link";
 
 type Subject = { subject_code: string; subject_name: string; branch: string };
@@ -43,8 +44,26 @@ export default function StudentRegisterPage() {
       Object.entries(data).forEach(([k, v]) => formData.append(k, v));
       formData.append("subject_codes", selectedSubjects.join(","));
       formData.append("face_image", faceImage);
-      await registerStudent(formData);
-      toast.success("Registered successfully!");
+      const result = await registerStudent(formData);
+      toast.success("Registration successful!");
+
+      // Encode face locally if ML server is running
+      if (faceImage) {
+        try {
+          const mlFormData = new FormData();
+          mlFormData.append("uid", data.uid);
+          mlFormData.append("file", faceImage);
+          await axios.post("http://localhost:8001/encode-face", mlFormData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          toast.success("Face encoded successfully!");
+        } catch {
+          toast("ML server offline — ask admin to encode your face later", {
+            icon: "⚠️",
+          });
+        }
+      }
+
       router.push("/student/login");
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Registration failed");
