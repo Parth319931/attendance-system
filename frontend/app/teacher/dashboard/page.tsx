@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import AuthGuard from "@/components/AuthGuard";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import axios from "axios";
 import {
   getAllSubjects,
   getTeacherSubjects,
@@ -102,23 +103,41 @@ export default function TeacherDashboard() {
   };
 
   const handleUploadPhoto = async () => {
-    if (!photo) return toast.error("Please select a class photo");
-    setUploading(true);
+  if (!photo) return toast.error("Please select a class photo");
+  setUploading(true);
+  try {
+    // Step 1: Send photo directly to local ML server
+    const mlFormData = new FormData();
+    mlFormData.append("file", photo);
+    
+    let presentUids: string[] = [];
     try {
-      const formData = new FormData();
-      formData.append("file", photo);
-      formData.append("subject_code", selectedSubject);
-      formData.append("division", selectedDivision);
-      formData.append("date", sessionDate);
-      formData.append("teacher_id", teacherId);
-      await uploadClassPhoto(formData);
-      toast.success("Photo processed! Loading results...");
-      await loadAttendanceResults();
-      setStep("results");
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || "Upload failed. ML model may not be running yet.");
-    } finally { setUploading(false); }
-  };
+      const mlResult = await axios.post("http://localhost:8001/recognize", mlFormData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      presentUids = mlResult.data.present_uids;
+      toast.success(`ML recognized ${presentUids.length} students`);
+    } catch {
+      toast.error("ML server not reachable — marking all absent");
+    }
+
+    // Step 2: Send results to backend to save attendance
+    const backendFormData = new FormData();
+    backendFormData.append("file", photo);
+    backendFormData.append("subject_code", selectedSubject);
+    backendFormData.append("division", selectedDivision);
+    backendFormData.append("date", sessionDate);
+    backendFormData.append("teacher_id", teacherId);
+    backendFormData.append("present_uids", JSON.stringify(presentUids));
+
+    await uploadClassPhoto(backendFormData);
+    toast.success("Attendance saved!");
+    await loadAttendanceResults();
+    setStep("results");
+  } catch (error: any) {
+    toast.error(error.response?.data?.detail || "Upload failed");
+  } finally { setUploading(false); }
+};
 
   const loadAttendanceResults = async () => {
   try {

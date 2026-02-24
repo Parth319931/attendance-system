@@ -112,7 +112,15 @@ export const manualOverride = async (
 };
 
 export const uploadClassPhoto = async (formData: FormData) => {
-  const response = await api.post("/ml/recognize", formData, {
+  const response = await api.post("/ml/recognize-with-results", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
+};
+
+export const uploadClassPhotoML = async (formData: FormData) => {
+  // Calls ML server directly - must be running locally
+  const response = await axios.post("http://localhost:8001/recognize", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
