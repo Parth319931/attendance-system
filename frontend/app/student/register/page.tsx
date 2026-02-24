@@ -49,15 +49,19 @@ export default function StudentRegisterPage() {
 
       // Encode face locally if ML server is running
       // Encode face locally if ML server is running
+      // Encode face locally if ML server is running
       if (faceImage) {
         try {
           console.log("Attempting to encode face for UID:", data.uid);
           const mlFormData = new FormData();
-          mlFormData.append("uid", data.uid);
           mlFormData.append("file", faceImage);
-          const encodeResult = await axios.post("http://localhost:8001/encode-face", mlFormData, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+          const encodeResult = await axios.post(
+            `http://localhost:8001/encode-face?uid=${data.uid}`,
+            mlFormData,
+            {
+              headers: { "Content-Type": "multipart/form-data" },
+            }
+          );
           console.log("Encode result:", encodeResult.data);
           toast.success("Face encoded successfully!");
         } catch (err) {
