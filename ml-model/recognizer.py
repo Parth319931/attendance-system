@@ -7,7 +7,7 @@ from face_encoder import load_all_encodings
 
 load_dotenv()
 MODEL_NAME = "Facenet"
-SIMILARITY_THRESHOLD = 0.70
+SIMILARITY_THRESHOLD = 0.60
 
 
 def cosine_similarity(a, b):
